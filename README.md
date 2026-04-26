@@ -1,6 +1,3 @@
-Segue um README.md bem completo, já pensando no repositório do app mobile e no fato de que já existe uma extensão de navegador para o Mindguard (assim você pode manter o README coerente entre os dois projetos).
-
-text
 # Mindguard App
 
 > Mindguard App é uma aplicação móvel de saúde mental que atua como um “guardião” dos seus pensamentos, emoções e diálogos digitais. Desenvolvida paralelamente à extensão de navegador **Mindguard**, ela complementa a experiência ao levar esses recursos de segurança emocional e cognitiva para o seu telefone.
