@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "988892542618",
+    "project_id": "com-mindguard-app-f19ce",
+    "storage_bucket": "com-mindguard-app-f19ce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:988892542618:android:c093f384eb97ff417f1123",
+        "android_client_info": {
+          "package_name": "com.mindguard.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcK73ZGnGaNPLI-CkZL6RNeLDf6EbMGbA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
