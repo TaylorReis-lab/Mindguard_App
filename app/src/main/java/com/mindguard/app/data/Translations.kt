@@ -13,9 +13,18 @@ object Translations {
             "app.name" to "MindGuard Block",
             "app.slogan" to "Sua proteção digital",
             "nav.home" to "Início",
-            "nav.activity" to "Atividade",
+            "nav.activity" to "Histórico",
+            "nav.lista" to "Lista",
             "nav.profile" to "Perfil",
-            "nav.settings" to "Config",
+            "nav.settings" to "Configurações",
+            "nav.privacy" to "Privacidade",
+            "nav.about" to "Sobre",
+            "home.blocks" to "Bloqueios",
+            "home.attempts" to "Tentativas",
+            "home.secure" to "Seguro",
+            "home.daysProtected" to "dias protegidos",
+            "home.detailActivity" to "Ver Atividade Detalhada",
+            "home.resetProgress" to "Zerar meu progresso (Eu falhei)",
             "profile.editProfile" to "Editar Perfil",
             "profile.language" to "Idioma",
             "profile.security" to "Segurança",
@@ -29,18 +38,24 @@ object Translations {
             "about.taylor" to "Motor de bloqueio adulto cirúrgico: BlockPorn.",
             "auth.login" to "Entrar com Google ou Email",
             "general.active" to "Ativado",
-            "general.inactive" to "Desativado",
-            "home.sitesBlocked" to "Sites Bloqueados",
-            "home.adsBlocked" to "Anúncios",
-            "home.trackersBlocked" to "Rastreadores"
+            "general.inactive" to "Desativado"
         ),
         "en" to mapOf(
             "app.name" to "MindGuard Block",
             "app.slogan" to "Your digital protection",
             "nav.home" to "Home",
-            "nav.activity" to "Activity",
+            "nav.activity" to "History",
+            "nav.lista" to "List",
             "nav.profile" to "Profile",
             "nav.settings" to "Settings",
+            "nav.privacy" to "Privacy",
+            "nav.about" to "About",
+            "home.blocks" to "Blocks",
+            "home.attempts" to "Attempts",
+            "home.secure" to "Secure",
+            "home.daysProtected" to "days protected",
+            "home.detailActivity" to "View Detailed Activity",
+            "home.resetProgress" to "Reset my progress (I failed)",
             "profile.editProfile" to "Edit Profile",
             "profile.language" to "Language",
             "profile.security" to "Security",
@@ -51,26 +66,10 @@ object Translations {
             "profile.version" to "Version",
             "profile.developed" to "Developed by Taylor Reis",
             "about.adguard" to "Ad blocking powered by AdGuard DNS.",
-            "about.taylor" to "Surgical adult blocking engine developed by Taylor Reis.",
+            "about.taylor" to "Surgical adult blocking engine: BlockPorn.",
             "auth.login" to "Sign in with Google or Email",
             "general.active" to "Active",
-            "general.inactive" to "Inactive",
-            "home.sitesBlocked" to "Sites Blocked",
-            "home.adsBlocked" to "Ads",
-            "home.trackersBlocked" to "Trackers"
-        ),
-        "ru" to mapOf(
-            "nav.home" to "Главная",
-            "nav.activity" to "Активность",
-            "nav.profile" to "Профиль",
-            "profile.logout" to "Выйти"
-            // Simplified for brevity, in real app add all keys
-        ),
-        "es" to mapOf(
-            "nav.home" to "Inicio",
-            "nav.activity" to "Actividad",
-            "nav.profile" to "Perfil",
-            "profile.logout" to "Cerrar Sesión"
+            "general.inactive" to "Inactive"
         )
     )
 

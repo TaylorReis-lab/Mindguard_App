@@ -3,6 +3,7 @@ package com.mindguard.app
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,6 +37,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        setupCrashHandler()
+
         lifecycleScope.launch {
             viewModel.isVpnActive.collectLatest { active ->
                 if (active) {
@@ -77,5 +80,14 @@ class MainActivity : ComponentActivity() {
             action = "STOP"
         }
         startService(intent)
+    }
+
+    private fun setupCrashHandler() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e("MindguardCrash", "Uncaught exception", throwable)
+            // Error report via email logic could go here
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
     }
 }

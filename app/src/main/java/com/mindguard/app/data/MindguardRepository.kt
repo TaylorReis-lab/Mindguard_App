@@ -2,6 +2,8 @@ package com.mindguard.app.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.*
@@ -10,8 +12,9 @@ import java.util.concurrent.TimeUnit
 class MindguardRepository(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("mindguard_prefs", Context.MODE_PRIVATE)
+    private val gson = Gson()
     
-    private val _allEvents = MutableStateFlow<List<BlockEvent>>(emptyList())
+    private val _allEvents = MutableStateFlow(loadEvents())
     val allEvents: StateFlow<List<BlockEvent>> = _allEvents
 
     private val _userStats = MutableStateFlow(loadStats())
@@ -32,13 +35,44 @@ class MindguardRepository(context: Context) {
         _notificationsEnabled.value = newVal
     }
 
+    private fun loadEvents(): List<BlockEvent> {
+        val json = prefs.getString("all_events", null) ?: return emptyList()
+        val type = object : TypeToken<List<BlockEvent>>() {}.type
+        return try {
+            gson.fromJson(json, type)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun saveEvents(events: List<BlockEvent>) {
+        val json = gson.toJson(events)
+        prefs.edit().putString("all_events", json).apply()
+        _allEvents.value = events
+    }
+
     private fun loadStats(): UserStats {
         return UserStats(
             daysClean = prefs.getInt("daysClean", 0),
             totalFailedAttempts = prefs.getInt("totalFailedAttempts", 0),
             totalBlockedAttempts = prefs.getInt("totalBlockedAttempts", 0),
+            adsBlocked = prefs.getInt("adsBlocked", 0),
+            trackersBlocked = prefs.getInt("trackersBlocked", 0),
             lastFailTimestamp = prefs.getLong("lastFailTimestamp", 0)
         )
+    }
+
+    private fun saveStats(stats: UserStats) {
+        prefs.edit().apply {
+            putInt("daysClean", stats.daysClean)
+            putInt("totalFailedAttempts", stats.totalFailedAttempts)
+            putInt("totalBlockedAttempts", stats.totalBlockedAttempts)
+            putInt("adsBlocked", stats.adsBlocked)
+            putInt("trackersBlocked", stats.trackersBlocked)
+            putLong("lastFailTimestamp", stats.lastFailTimestamp)
+            apply()
+        }
+        _userStats.value = stats
     }
 
     private fun loadCustomBlocklist(): List<String> {
@@ -66,32 +100,16 @@ class MindguardRepository(context: Context) {
         _language.value = lang
     }
 
-    fun isUrlBlocked(url: String): Boolean {
-        // Check Custom Blocklist
-        if (_customBlocklist.value.any { url.contains(it, ignoreCase = true) }) return true
-        
-        // Check Master Adult Blocklist
-        return BlocklistProvider.isAdultContent(url)
-    }
-
-    private fun saveStats(stats: UserStats) {
-        prefs.edit().apply {
-            putInt("daysClean", stats.daysClean)
-            putInt("totalFailedAttempts", stats.totalFailedAttempts)
-            putInt("totalBlockedAttempts", stats.totalBlockedAttempts)
-            putLong("lastFailTimestamp", stats.lastFailTimestamp)
-            apply()
-        }
-        _userStats.value = stats
-    }
-
     fun recordBlock(url: String, type: String) {
         val newEvent = BlockEvent(url = url, type = type)
-        _allEvents.value = listOf(newEvent) + _allEvents.value
+        val updatedEvents = (listOf(newEvent) + _allEvents.value).take(100)
+        saveEvents(updatedEvents)
         
-        if (type == "ADULT") {
-            val current = _userStats.value
-            saveStats(current.copy(totalBlockedAttempts = current.totalBlockedAttempts + 1))
+        val current = _userStats.value
+        when (type) {
+            "ADULT" -> saveStats(current.copy(totalBlockedAttempts = current.totalBlockedAttempts + 1))
+            "AD" -> saveStats(current.copy(adsBlocked = current.adsBlocked + 1))
+            "TRACKER" -> saveStats(current.copy(trackersBlocked = current.trackersBlocked + 1))
         }
     }
 
@@ -112,6 +130,9 @@ class MindguardRepository(context: Context) {
             if (days != current.daysClean) {
                 saveStats(current.copy(daysClean = days))
             }
+        } else if (current.totalFailedAttempts == 0) {
+            // First time use, let's start with 1 if they never failed? 
+            // Or leave at 0 until 24h pass.
         }
     }
 

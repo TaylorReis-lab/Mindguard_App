@@ -1,12 +1,29 @@
 package com.mindguard.app.ui
 
 import android.content.Intent
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -16,14 +33,55 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Launch
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.automirrored.rounded.Logout
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AdsClick
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Inbox
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Laptop
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.VerifiedUser
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -38,7 +96,8 @@ import com.mindguard.app.BlockActivity
 import com.mindguard.app.data.Translations
 import com.mindguard.app.viewmodel.MindguardViewModel
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 // --- CSS-based Style Helpers ---
 val GlassColor = Color(255, 255, 255, 15) // rgba(255,255,255,0.06)
@@ -62,9 +121,7 @@ fun EntranceAnimation(delay: Int = 0, content: @Composable () -> Unit) {
     )
 }
 
-fun translateLabel(label: String, lang: String): String {
-    return Translations.get(lang, "nav.${label.lowercase()}")
-}
+fun t(key: String, lang: String) = Translations.get(lang, key)
 
 @Composable
 fun MainScreen() {
@@ -81,15 +138,15 @@ fun MainScreen() {
                 modifier = Modifier.border(1.dp, GlassBorderColor, RoundedCornerShape(0.dp))
             ) {
                 val items = listOf(
-                    Triple(0, "Home", Icons.Rounded.Shield),
-                    Triple(1, "Activity", Icons.Rounded.History),
-                    Triple(2, "Lista", Icons.Rounded.Language),
-                    Triple(3, "Profile", Icons.Rounded.Person)
+                    Triple(0, "home", Icons.Rounded.Shield),
+                    Triple(1, "activity", Icons.Rounded.History),
+                    Triple(2, "lista", Icons.Rounded.Language),
+                    Triple(3, "profile", Icons.Rounded.Person)
                 )
-                items.forEach { (index, label, icon) ->
+                items.forEach { (index, key, icon) ->
                     NavigationBarItem(
-                        icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp)) },
-                        label = { Text(Translations.get(lang, "nav.${label.lowercase()}"), style = MaterialTheme.typography.labelSmall) },
+                        icon = { Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp)) },
+                        label = { Text(t("nav.$key", lang), style = MaterialTheme.typography.labelSmall) },
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
                         colors = NavigationBarItemDefaults.colors(
@@ -115,10 +172,8 @@ fun MainScreen() {
 
 @Composable
 fun ProfileWrapper(viewModel: MindguardViewModel) {
-    var subScreen by remember { mutableStateOf("main") } // main, settings, privacy, about
+    var subScreen by remember { mutableStateOf("main") }
     val lang by viewModel.language.collectAsState()
-    
-    fun t(key: String) = Translations.get(lang, key)
 
     AnimatedContent(targetState = subScreen, label = "profile_nav") { screen ->
         when (screen) {
@@ -136,8 +191,6 @@ fun DashboardScreen(viewModel: MindguardViewModel) {
     val isEnabled by viewModel.isVpnActive.collectAsState()
     val lang by viewModel.language.collectAsState()
     val context = LocalContext.current
-    
-    fun t(key: String) = Translations.get(lang, key)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
@@ -155,7 +208,7 @@ fun DashboardScreen(viewModel: MindguardViewModel) {
                             Text("Mind", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = Color.White)
                             Text("Guard", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = Color(0xFF7C3AED))
                         }
-                        Text(t("app.slogan"), style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
+                        Text(t("app.slogan", lang), style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
                     }
                     Box(
                         modifier = Modifier
@@ -181,27 +234,9 @@ fun DashboardScreen(viewModel: MindguardViewModel) {
         item {
             EntranceAnimation(delay = 300) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatCardCSS(
-                        icon = "🔞", 
-                        label = "Bloqueios", 
-                        value = stats.totalBlockedAttempts, 
-                        color = Color(0xFFEF4444), 
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCardCSS(
-                        icon = "📉", 
-                        label = "Tentativas", 
-                        value = stats.totalFailedAttempts, 
-                        color = Color(0xFFF59E0B), 
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCardCSS(
-                        icon = "🛡️", 
-                        label = "Seguro", 
-                        value = stats.daysClean, 
-                        color = Color(0xFF10B981), 
-                        modifier = Modifier.weight(1f)
-                    )
+                    StatCardCSS(icon = "🔞", label = t("home.blocks", lang), value = stats.totalBlockedAttempts, color = Color(0xFFEF4444), modifier = Modifier.weight(1f))
+                    StatCardCSS(icon = "📉", label = t("home.attempts", lang), value = stats.totalFailedAttempts, color = Color(0xFFF59E0B), modifier = Modifier.weight(1f))
+                    StatCardCSS(icon = "🛡️", label = t("home.secure", lang), value = stats.daysClean, color = Color(0xFF10B981), modifier = Modifier.weight(1f))
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
@@ -209,7 +244,7 @@ fun DashboardScreen(viewModel: MindguardViewModel) {
 
         item {
             EntranceAnimation(delay = 400) {
-                StreakProgressCardCSS(days = stats.daysClean)
+                StreakProgressCardCSS(days = stats.daysClean, label = t("home.daysProtected", lang))
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -227,7 +262,7 @@ fun DashboardScreen(viewModel: MindguardViewModel) {
                     onClick = { 
                         viewModel.simulateBlock()
                         val intent = Intent(context, BlockActivity::class.java).apply {
-                            putExtra("url", "exemplo-vicio.com")
+                            putExtra("url", "exemplo-adulto.com")
                         }
                         context.startActivity(intent)
                     },
@@ -237,7 +272,16 @@ fun DashboardScreen(viewModel: MindguardViewModel) {
                 ) {
                     Icon(Icons.AutoMirrored.Rounded.Launch, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Testar Escudo de Bloqueio", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                    Text(t("home.detailActivity", lang), style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            EntranceAnimation(delay = 700) {
+                TextButton(
+                    onClick = { viewModel.recordFail() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(t("home.resetProgress", lang), style = MaterialTheme.typography.labelSmall, color = Color(0xFFEF4444).copy(alpha = 0.6f))
                 }
             }
         }
@@ -318,7 +362,7 @@ fun StatCardCSS(icon: String, label: String, value: Int, color: Color, modifier:
 }
 
 @Composable
-fun StreakProgressCardCSS(days: Int) {
+fun StreakProgressCardCSS(days: Int, label: String) {
     val progress = (days / 30f).coerceIn(0f, 1f)
     Card(
         modifier = Modifier.fillMaxWidth().glass(24),
@@ -334,7 +378,7 @@ fun StreakProgressCardCSS(days: Int) {
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("$days dias protegidos", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                Text("$days $label", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
                     progress = { progress },
@@ -370,10 +414,11 @@ fun MotivationCardCSS(message: String) {
 @Composable
 fun HistoryScreen(viewModel: MindguardViewModel) {
     val events by viewModel.allEvents.collectAsState()
+    val lang by viewModel.language.collectAsState()
     val dateFormat = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
 
     Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-        Text("HISTÓRICO", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp)
+        Text(t("nav.activity", lang).uppercase(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp)
         Spacer(modifier = Modifier.height(24.dp))
         
         if (events.isEmpty()) {
@@ -381,7 +426,7 @@ fun HistoryScreen(viewModel: MindguardViewModel) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Rounded.Inbox, null, modifier = Modifier.size(48.dp), tint = Color(0xFF334155))
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Sem atividade recente.", color = Color(0xFF64748B))
+                    Text(t("activity.empty", lang), color = Color(0xFF64748B))
                 }
             }
         } else {
@@ -393,7 +438,7 @@ fun HistoryScreen(viewModel: MindguardViewModel) {
                             headlineContent = { Text(event.url, fontWeight = FontWeight.Bold, color = Color.White) },
                             supportingContent = { 
                                 Text(
-                                    "${if(event.type == "ADULT") "Bloqueio Adulto" else "Anúncio"} • ${dateFormat.format(Date(event.timestamp))}",
+                                    "${if(event.type == "ADULT") t("activity.blocked", lang) else t("home.adsBlocked", lang)} • ${dateFormat.format(Date(event.timestamp))}",
                                     color = if(event.type == "ADULT") Color(0xFFEF4444) else Color(0xFF94A3B8)
                                 ) 
                             },
@@ -455,11 +500,11 @@ fun CustomBlocklistScreen(viewModel: MindguardViewModel) {
 
     if (showDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { },
             containerColor = Color(0xFF1E293B),
             title = { Text("Bloquear Site") },
             text = { OutlinedTextField(value = newUrl, onValueChange = { newUrl = it }, label = { Text("URL") }) },
-            confirmButton = { Button(onClick = { if(newUrl.isNotBlank()) { viewModel.addCustomSite(newUrl); newUrl = ""; showDialog = false } }) { Text("OK") } }
+            confirmButton = { Button(onClick = { if(newUrl.isNotBlank()) { viewModel.addCustomSite(newUrl); newUrl = ""; } }) { Text("OK") } }
         )
     }
 }
@@ -467,10 +512,11 @@ fun CustomBlocklistScreen(viewModel: MindguardViewModel) {
 @Composable
 fun ProfilePage(viewModel: MindguardViewModel, onNavigate: (String) -> Unit) {
     val lang by viewModel.language.collectAsState()
+    val stats by viewModel.userStats.collectAsState()
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
     val context = LocalContext.current
     
-    fun t(key: String) = Translations.get(lang, key)
+    val friendlyLang = Translations.LANGUAGES.find { it.code == lang }?.let { "${it.flag} ${it.name}" } ?: lang
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
@@ -494,25 +540,27 @@ fun ProfilePage(viewModel: MindguardViewModel, onNavigate: (String) -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = "Taylor Reis", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(text = "taylor.reis@mindguard.com", style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
+                Text(text = "taylor-reis@outlook.com", style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
             }
         }
 
         // Account
         item {
-            Text("Conta", style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
+            Text(t("nav.profile", lang), style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
-            SettingsItem(icon = Icons.Rounded.Edit, label = t("profile.editProfile"), onClick = { /* TODO */ })
-            SettingsItem(icon = Icons.Rounded.Language, label = t("profile.language"), value = Translations.LANGUAGES.find { it.code == lang }?.name ?: lang, onClick = { onNavigate("settings") })
+            SettingsItem(icon = Icons.Rounded.Edit, label = t("profile.editProfile", lang), onClick = { 
+                android.widget.Toast.makeText(context, "Em breve: Edição de Perfil", android.widget.Toast.LENGTH_SHORT).show()
+            })
+            SettingsItem(icon = Icons.Rounded.Language, label = t("profile.language", lang), value = friendlyLang, onClick = { onNavigate("settings") })
         }
 
         // Security
         item {
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Segurança", style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
+            Text(t("profile.security", lang), style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
-            SettingsItem(icon = Icons.Rounded.Lock, label = t("profile.security"), onClick = { onNavigate("settings") })
-            SettingsItem(icon = Icons.Rounded.Shield, label = t("profile.privacy"), onClick = { onNavigate("privacy") })
+            SettingsItem(icon = Icons.Rounded.Lock, label = t("profile.security", lang), onClick = { onNavigate("settings") })
+            SettingsItem(icon = Icons.Rounded.Shield, label = t("profile.privacy", lang), onClick = { onNavigate("privacy") })
         }
 
         // Preferences
@@ -522,26 +570,39 @@ fun ProfilePage(viewModel: MindguardViewModel, onNavigate: (String) -> Unit) {
             Spacer(modifier = Modifier.height(12.dp))
             SettingsItem(
                 icon = Icons.Rounded.Notifications,
-                label = t("profile.notifications"),
-                value = if(notificationsEnabled) t("general.active") else t("general.inactive"),
+                label = t("profile.notifications", lang),
+                value = if(notificationsEnabled) t("general.active", lang) else t("general.inactive", lang),
                 showArrow = false,
                 onClick = { viewModel.toggleNotifications() }
             )
-            SettingsItem(icon = Icons.Rounded.Info, label = t("about.title"), onClick = { onNavigate("about") })
+            SettingsItem(
+                icon = Icons.Rounded.BugReport,
+                label = if (lang == "pt-BR") "Reportar Bug" else "Report Bug",
+                onClick = { 
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "message/rfc822"
+                        putExtra(Intent.EXTRA_EMAIL, arrayOf("taylor-reis@outlook.com"))
+                        putExtra(Intent.EXTRA_SUBJECT, "Mindguard Block Bug Report")
+                        putExtra(Intent.EXTRA_TEXT, "--- INFORMAÇÕES DO SISTEMA ---\nVersão: 2.0.0\nIdioma: $lang\nBloqueios: ${stats.totalBlockedAttempts}\nTentativas: ${stats.totalFailedAttempts}\n\n--- DESCRIÇÃO DO BUG ---\n")
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Enviar Relatório"))
+                }
+            )
+            SettingsItem(icon = Icons.Rounded.Info, label = t("nav.about", lang), onClick = { onNavigate("about") })
         }
 
         // Logout
         item {
             Spacer(modifier = Modifier.height(24.dp))
-            SettingsItem(icon = Icons.AutoMirrored.Rounded.Logout, label = t("profile.logout"), danger = true, onClick = {
+            SettingsItem(icon = Icons.AutoMirrored.Rounded.Logout, label = t("profile.logout", lang), danger = true, onClick = {
                 android.widget.Toast.makeText(context, "Saindo...", android.widget.Toast.LENGTH_SHORT).show()
             })
         }
         
         item {
             Spacer(modifier = Modifier.height(32.dp))
-            Text(t("profile.version") + " 2.0.0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color(0xFF334155), style = MaterialTheme.typography.labelSmall)
-            Text(t("profile.developed"), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color(0xFF334155), style = MaterialTheme.typography.labelSmall)
+            Text(t("profile.version", lang) + " 2.0.0", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color(0xFF334155), style = MaterialTheme.typography.labelSmall)
+            Text(t("profile.developed", lang), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color(0xFF334155), style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -550,8 +611,6 @@ fun ProfilePage(viewModel: MindguardViewModel, onNavigate: (String) -> Unit) {
 fun SettingsScreen(viewModel: MindguardViewModel, onBack: () -> Unit) {
     val lang by viewModel.language.collectAsState()
     val context = LocalContext.current
-    
-    fun t(key: String) = Translations.get(lang, key)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
@@ -563,11 +622,10 @@ fun SettingsScreen(viewModel: MindguardViewModel, onBack: () -> Unit) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, null, tint = Color.White)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
-                Text(text = t("nav.settings"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = t("nav.settings", lang), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
         }
 
-        // --- LOGIN / CONTA AREA ---
         item {
             Card(modifier = Modifier.fillMaxWidth().glass(20), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -590,7 +648,7 @@ fun SettingsScreen(viewModel: MindguardViewModel, onBack: () -> Unit) {
                     ) {
                         Icon(Icons.AutoMirrored.Rounded.Login, null, tint = Color.Black, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(t("auth.login"), color = Color.Black, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                        Text(t("auth.login", lang), color = Color.Black, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -600,14 +658,24 @@ fun SettingsScreen(viewModel: MindguardViewModel, onBack: () -> Unit) {
         item {
             Text("TECNOLOGIA", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
             Spacer(modifier = Modifier.height(12.dp))
-            SettingsItem(icon = Icons.Rounded.AdsClick, label = "AdGuard DNS", value = t("about.adguard"), onClick = {})
-            SettingsItem(icon = Icons.Rounded.VerifiedUser, label = "BlockPorn", value = t("about.taylor"), onClick = {})
+            SettingsItem(
+                icon = Icons.Rounded.AdsClick, 
+                label = "AdGuard DNS", 
+                value = "Utilizado para o bloqueio inteligente de anúncios e trackers.", 
+                onClick = {}
+            )
+            SettingsItem(
+                icon = Icons.Rounded.VerifiedUser, 
+                label = "BlockPorn Engine", 
+                value = "O bloqueio de sites adultos foi 100% desenvolvido por Taylor Reis.", 
+                onClick = {}
+            )
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
 
         item {
-            Text(t("lang.title").uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
+            Text(t("lang.title", lang).uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
             Spacer(modifier = Modifier.height(12.dp))
             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Translations.LANGUAGES.forEach { info ->
@@ -625,8 +693,6 @@ fun SettingsScreen(viewModel: MindguardViewModel, onBack: () -> Unit) {
 
 @Composable
 fun PrivacyPage(lang: String, onBack: () -> Unit) {
-    fun t(key: String) = Translations.get(lang, key)
-
     LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(top = 20.dp, bottom = 40.dp)) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 24.dp)) {
@@ -634,7 +700,7 @@ fun PrivacyPage(lang: String, onBack: () -> Unit) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, null, tint = Color.White)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
-                Text(text = "🛡️ " + t("privacy.title"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = "🛡️ " + t("privacy.title", lang), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -644,15 +710,15 @@ fun PrivacyPage(lang: String, onBack: () -> Unit) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("🔒", fontSize = 20.sp)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(t("privacy.dataTitle"), fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(t("privacy.dataTitle", lang), fontWeight = FontWeight.Bold, color = Color.White)
                     }
-                    Text(t("privacy.dataDesc"), style = MaterialTheme.typography.labelSmall, color = Color(0xFF10B981))
+                    Text(t("privacy.dataDesc", lang), style = MaterialTheme.typography.labelSmall, color = Color(0xFF10B981))
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text(t("privacy.p1"), style = MaterialTheme.typography.bodySmall, color = Color(0xFFCBD5E1), lineHeight = 18.sp)
+            Text(t("privacy.p1", lang), style = MaterialTheme.typography.bodySmall, color = Color(0xFFCBD5E1), lineHeight = 18.sp)
             Spacer(modifier = Modifier.height(12.dp))
-            Text(t("privacy.p2"), style = MaterialTheme.typography.bodySmall, color = Color(0xFFCBD5E1), lineHeight = 18.sp)
+            Text(t("privacy.p2", lang), style = MaterialTheme.typography.bodySmall, color = Color(0xFFCBD5E1), lineHeight = 18.sp)
             Spacer(modifier = Modifier.height(20.dp))
             
             val points = listOf("Nenhum dado pessoal é coletado", "Navegação não é rastreada", "DNS opera 100% localmente", "Sem servidores externos", "Sem venda ou compartilhamento de dados")
@@ -669,7 +735,7 @@ fun PrivacyPage(lang: String, onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(32.dp))
             Box(modifier = Modifier.fillMaxWidth().glass(16).padding(16.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Desenvolvido com ❤️ por Taylor Reis", style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
+                    Text("Desenvolvido por Taylor Reis", style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
                     Text("© 2026 MindGuard — Direitos reservados", style = MaterialTheme.typography.labelSmall, color = Color(0xFF475569))
                 }
             }
@@ -681,6 +747,7 @@ fun PrivacyPage(lang: String, onBack: () -> Unit) {
 fun AboutPage(viewModel: MindguardViewModel, onBack: () -> Unit) {
     val lang by viewModel.language.collectAsState()
     val context = LocalContext.current
+    
     fun t(key: String) = Translations.get(lang, key)
 
     LazyColumn(
@@ -688,15 +755,29 @@ fun AboutPage(viewModel: MindguardViewModel, onBack: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = PaddingValues(top = 20.dp, bottom = 40.dp)
     ) {
+        // Custom Header
         item {
-            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack, modifier = Modifier.glass(12).size(40.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.glass(12).size(40.dp)
+                ) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, null, tint = Color.White)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
-                Text(text = t("about.title"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    text = t("nav.about"),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
             }
         }
+
+        // App logo
         item {
             Box(
                 modifier = Modifier
@@ -713,20 +794,33 @@ fun AboutPage(viewModel: MindguardViewModel, onBack: () -> Unit) {
                 Text("Mind", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = Color.White)
                 Text("Guard", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = Color(0xFF7C3AED))
             }
-            Text(t("about.version"), color = Color(0xFF64748B), style = MaterialTheme.typography.labelSmall)
+            Text("Versão 1.0.0", color = Color(0xFF64748B), style = MaterialTheme.typography.labelSmall)
             Text(t("app.slogan"), color = Color(0xFF475569), style = MaterialTheme.typography.labelSmall)
             
             Spacer(modifier = Modifier.height(40.dp))
+        }
 
-            Text("Nossa História", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED), modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                "O Mindguard Block nasceu da necessidade de retomar o controle sobre a nossa própria atenção e saúde mental em um mundo hiperconectado. Taylor Reis idealizou este projeto para ser um guardião silencioso contra as distrações e vícios da era digital.",
-                style = MaterialTheme.typography.bodyMedium, color = Color(0xFFCBD5E1), textAlign = TextAlign.Start, lineHeight = 22.sp
-            )
-
+        // Description
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "O MindGuard Block é um escudo digital pessoal que protege você contra conteúdo adulto, anúncios invasivos e rastreadores de dados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFCBD5E1),
+                    lineHeight = 22.sp
+                )
+                Text(
+                    text = "Criado para ajudar pessoas a terem uma experiência online mais saudável e segura, sem monitoramento ou coleta de dados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFCBD5E1),
+                    lineHeight = 22.sp
+                )
+            }
             Spacer(modifier = Modifier.height(40.dp))
+        }
 
+        // Features
+        item {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text("✨ Funcionalidades", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(16.dp))
@@ -736,6 +830,7 @@ fun AboutPage(viewModel: MindguardViewModel, onBack: () -> Unit) {
                     "🔞" to "Filtragem de conteúdo adulto",
                     "🚫" to "Remoção de anúncios invasivos",
                     "👁" to "Bloqueio de rastreadores",
+                    "🦠" to "Proteção contra malware",
                     "🎯" to "Sistema de metas pessoais",
                     "💬" to "Motivação diária inteligente"
                 )
@@ -753,11 +848,15 @@ fun AboutPage(viewModel: MindguardViewModel, onBack: () -> Unit) {
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(40.dp))
+        }
 
+        // PC Extension
+        item {
             Card(
-                modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF7C3AED).copy(alpha = 0.2f), RoundedCornerShape(24.dp)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFF7C3AED).copy(alpha = 0.2f), RoundedCornerShape(24.dp)),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF7C3AED).copy(alpha = 0.08f)),
                 shape = RoundedCornerShape(24.dp)
             ) {
@@ -765,31 +864,47 @@ fun AboutPage(viewModel: MindguardViewModel, onBack: () -> Unit) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.Laptop, null, tint = Color.White, modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(if (lang == "pt-BR") "Extensão para PC" else "PC Extension", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("Extensão para PC", fontWeight = FontWeight.Bold, color = Color.White)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(if (lang == "pt-BR") "Sincronize sua proteção em todos os seus navegadores." else "Sync protection across all your browsers.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
+                    Text("Sincronize sua proteção em todos os seus navegadores desktop.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(onClick = { android.widget.Toast.makeText(context, "Chrome Store soon", android.widget.Toast.LENGTH_SHORT).show() }, modifier = Modifier.weight(1f).glass(12), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) { Text("Chrome", fontSize = 11.sp) }
-                        Button(onClick = { android.widget.Toast.makeText(context, "Add-ons store soon", android.widget.Toast.LENGTH_SHORT).show() }, modifier = Modifier.weight(1f).glass(12), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) { Text("Firefox", fontSize = 11.sp) }
+                        Button(
+                            onClick = { android.widget.Toast.makeText(context, "Chrome Store soon", android.widget.Toast.LENGTH_SHORT).show() }, 
+                            modifier = Modifier.weight(1f).glass(12), 
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                        ) { 
+                            Text("Chrome", fontSize = 11.sp) 
+                        }
+                        Button(
+                            onClick = { android.widget.Toast.makeText(context, "Add-ons store soon", android.widget.Toast.LENGTH_SHORT).show() }, 
+                            modifier = Modifier.weight(1f).glass(12), 
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                        ) { 
+                            Text("Firefox", fontSize = 11.sp) 
+                        }
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(32.dp))
+        }
 
+        // Buy me a coffee
+        item {
             Button(
-                onClick = { android.widget.Toast.makeText(context, "Support soon", android.widget.Toast.LENGTH_SHORT).show() },
+                onClick = { android.widget.Toast.makeText(context, "Apoio recebido! ❤️", android.widget.Toast.LENGTH_LONG).show() },
                 modifier = Modifier.fillMaxWidth().height(60.dp).shadow(24.dp, RoundedCornerShape(20.dp), spotColor = Color(0xFFF59E0B)),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text(if (lang == "pt-BR") "☕ Me pague um café" else "☕ Buy me a coffee", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
+                Text("☕ Me pague um café", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
             }
-
             Spacer(modifier = Modifier.height(48.dp))
-            
+        }
+
+        // Footer
+        item {
             Text(t("profile.developed"), style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B))
             Text("© 2026 MindGuard — Direitos reservados", style = MaterialTheme.typography.labelSmall, color = Color(0xFF475569))
             Spacer(modifier = Modifier.height(40.dp))
